@@ -52,7 +52,7 @@ function addTrackList(listOfTracks, movieTitle, moviePoster) {
 
         moviePressed = false;
 
-        makeClassItem.addEventListener('click', function (e) {
+        makeClassItem.addEventListener('click', async function (e) {
             e.preventDefault();
             let wordInput = listOfTracks[key].track_name + ' ' + movieTitle,
                 ytURL = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${wordInput}&key=${api_key}`
@@ -74,11 +74,9 @@ function addTrackList(listOfTracks, movieTitle, moviePoster) {
 
             makeClassItem.childNodes[0].append(bars)
 
-            get(ytURL)
-                .then((response) => {
+            let response = await get(ytURL)
                     //some functions here
                     getVideoId(response);
-                });
         });
     });
 }
@@ -142,7 +140,7 @@ function getAlbum(wikiObject, wikiURL, movieYear, movieTitle, moviePoster) {
 
     // Function to catch errors and change wikiURL
     // catchError scope is only for getAlbum
-    function catchError() {
+    async function catchError() {
         wikiURL = wikiURL + searchURLEnding[searchPageCount];
 
         //////////////////
@@ -170,29 +168,28 @@ function getAlbum(wikiObject, wikiURL, movieYear, movieTitle, moviePoster) {
         //  RICK ROLL   //
         //////////////////
         
-        get(wikiURL)
-            .then((response) => {
-                searchingPage = true;
-                getAlbum(response, wikiURL, movieYear, movieTitle, moviePoster);
-            })
-            .catch(err =>{
-                // RESET
-                searchingPage = false;
-                searchPageCount = 0;
+        try {
+            let response = await get(wikiURL);
+            searchingPage = true;
+            getAlbum(response, wikiURL, movieYear, movieTitle, moviePoster);
+        } catch(err) {
+            // RESET
+            searchingPage = false;
+            searchPageCount = 0;
 
-                // Removes loading and sets search results to none
-                searchResults.style.opacity = 0;
+            // Removes loading and sets search results to none
+            searchResults.style.opacity = 0;
 
-                // If no soundtrack available for movie appends error message
-                body.append(noSoundTrackContainer);
+            // If no soundtrack available for movie appends error message
+            body.append(noSoundTrackContainer);
 
-                setTimeout(()=> {
-                    load.style.opacity = 0;
-                    searchResults.style.display = 'none';
+            setTimeout(()=> {
+                load.style.opacity = 0;
+                searchResults.style.display = 'none';
 
-                    noSoundTrackContainer.style.transition = 'opacity 1s';
-                    noSoundTrackContainer.style.opacity = 1;
-                }, 1000);
-            });
+                noSoundTrackContainer.style.transition = 'opacity 1s';
+                noSoundTrackContainer.style.opacity = 1;
+            }, 1000);
+        }
     }
 }
