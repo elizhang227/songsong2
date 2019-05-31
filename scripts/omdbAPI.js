@@ -45,33 +45,31 @@ function getMovies(omdbMovie) {
                 searchResults.style.display = 'block';
             }, 1000);
 
-            omdbMovie.Search.forEach(function(movie,index) {
+            omdbMovie.Search.forEach(async function(movie,index) {
                 // SEARCH INDIVIDUAL FULL
                 let individualMovie = `http://www.omdbapi.com/?i=${movie.imdbID}&plot=full&apikey=${omdb_api_key}`;
-                get(individualMovie)
-                    .then((response)=>{
-                        const load = document.getElementById('loadingIcon');
+                const response =  await get(individualMovie)
+                    const load = document.getElementById('loadingIcon');
 
-                        if(load.classList.value.indexOf('loadingNow') == -1 ){
-                            load.classList.add('loadingNow');
-                        } else {
-                            document.getElementsByClassName('loadingNow')[0].style.opacity = 1;
-                        }
+                    if(load.classList.value.indexOf('loadingNow') == -1 ){
+                        load.classList.add('loadingNow');
+                    } else {
+                        document.getElementsByClassName('loadingNow')[0].style.opacity = 1;
+                    }
 
-                        searchInput.parentElement.classList.add('searchBar--To-Top');
+                    searchInput.parentElement.classList.add('searchBar--To-Top');
 
-                        setTimeout(function(){
-                            getSingleMovie(response,index);
-                            document.getElementsByClassName('loadingNow')[0].style.opacity = 0;
-                            searchResults.style.opacity = 1;
-                        }, 1500);
-                    });
+                    setTimeout(function(){
+                        getSingleMovie(response,index);
+                        document.getElementsByClassName('loadingNow')[0].style.opacity = 0;
+                        searchResults.style.opacity = 1;
+                    }, 1500);
             });
         }
     }
 }
 
-function getSingleMovie(movie, index){
+async function getSingleMovie(movie, index){
     if(movie.Runtime != 'N/A'){
         const movieLength = Number(movie.Runtime.match(/\d+/g)[0]);
 
@@ -98,10 +96,12 @@ function getSingleMovie(movie, index){
             if(movie.Poster == 'N/A'){
                 moviePoster.src = './images/404Poster.jpg'
             } else {
-                fetch(movie.Poster)
-                    .then(response=>{
-                        moviePoster.src = response.url
-                    }).catch(moviePoster.src = './images/404Poster.jpg')
+                try {
+                    let response = await fetch(movie.Poster);
+                    moviePoster.src = response.url;
+                } catch(error) {
+                    moviePoster.src = './images/404Poster.jpg'
+                }
             }    
 
             // appending items
@@ -111,34 +111,30 @@ function getSingleMovie(movie, index){
             searchPressed = false;
 
             // event listener for each movie
-            movieItem.addEventListener('click',function(e){
+            movieItem.addEventListener('click', async function(e){
                 let wikiURL = `https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&origin=*&format=json&formatversion=2&titles=${movieTitle.textContent}`;
-                get(wikiURL)
-                .then((response) =>  {
-                    if(moviePressed == false){
-                        moviePressed = true;
-                        getAlbum(response, wikiURL, movie.Year, movie.Title, moviePoster.src);
-                    }
-                });
+                let response = await get(wikiURL);
+                if(moviePressed == false){
+                    moviePressed = true;
+                    getAlbum(response, wikiURL, movie.Year, movie.Title, moviePoster.src);
+                }
             });
         }
     }
 }
 
-searchInput.addEventListener('keypress', function(e) {
+searchInput.addEventListener('keypress', async function(e) {
     let key = e.which || e.keyCode;
 
     if (key === 13) {
         let search = this.value;
         URL = `http://www.omdbapi.com/?s=${search}&plot=full&apikey=${omdb_api_key}`;
 
-        get(URL)
-        .then((response) =>  {
-            moviePressed = false;
-            if(searchPressed == false){
-                searchPressed = true;
-                getMovies(response);
-            }
-        });
+        let response = await get(URL);
+        moviePressed = false;
+        if(searchPressed == false){
+            searchPressed = true;
+            getMovies(response);
+        }
     }
 });
